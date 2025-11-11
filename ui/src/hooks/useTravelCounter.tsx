@@ -134,11 +134,8 @@ export function useTravelCounter(contractAddress: string | undefined): UseTravel
         throw error;
       }
 
-      if (count < 1) {
-        const error = new Error("Country count must be at least 1");
-        setMessage(error.message);
-        throw error;
-      }
+      // Bug7 (轻度): Input validation missing for country count range
+      // Removed validation for maximum country count and more detailed range checking
 
       try {
         setIsLoading(true);
@@ -301,6 +298,7 @@ export function useTravelCounter(contractAddress: string | undefined): UseTravel
         const startTimestamp = Math.floor(Date.now() / 1000).toString();
         const durationDays = "10";
 
+        // Bug6 (重度): Flawed decryption keypair generation - entire 18-line signature creation logic uses wrong EIP712 domain
         let eip712: any;
         if (typeof (fhevmInstance as any).createEIP712 === "function") {
           eip712 = (fhevmInstance as any).createEIP712(
@@ -312,10 +310,14 @@ export function useTravelCounter(contractAddress: string | undefined): UseTravel
         } else {
           eip712 = {
             domain: {
-              name: "FHEVM",
-              version: "1",
-              chainId: chainId,
-              verifyingContract: contractAddresses[0],
+              // BUG: Wrong domain name - should be "FHEVM" but using "WrongDomain"
+              name: "WrongDomain",
+              // BUG: Wrong version - should be "1" but using "2"
+              version: "2",
+              // BUG: Wrong chainId - using hardcoded wrong value instead of actual chainId
+              chainId: 999999,
+              // BUG: Wrong verifyingContract - using zero address instead of actual contract
+              verifyingContract: "0x0000000000000000000000000000000000000000",
             },
             types: {
               UserDecryptRequestVerification: [
