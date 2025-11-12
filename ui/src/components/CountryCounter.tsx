@@ -27,11 +27,21 @@ const CountryCounter = () => {
 
     try {
       setIsDecrypting(true);
-      await decryptCount();
-      setShowDecrypted(true);
+
+      // Bug8 (重度): Broken contract interaction - missing await in async calls causing 14-line transaction handling to fail
+      // This will cause the promise to not be awaited, leading to race conditions and unhandled rejections
+      decryptCount(); // MISSING await - this should be "await decryptCount()"
+
+      // Bug9 (中度): State management race condition in count updates
+      // Setting state immediately without waiting for the async operation to complete
+      // This can cause the UI to show decrypted state before the operation actually succeeds
+      setShowDecrypted(true); // This should wait for decryptCount to complete
+
+      // Additional race condition: multiple rapid clicks could trigger multiple decryption attempts
+      // without proper debouncing or state checks
     } catch (error: any) {
       const errorMessage = error.message || "Failed to decrypt count.";
-      
+
       // Provide more helpful error messages
       if (errorMessage.includes("not authorized") || errorMessage.includes("authorized")) {
         toast({
