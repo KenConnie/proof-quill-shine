@@ -8,15 +8,26 @@ const WalletConnect = () => {
   const { disconnect } = useDisconnect();
   const [isConnecting, setIsConnecting] = useState(false);
 
-  // Bug5 (轻度): Missing error handling in wallet connect function
-  // No try-catch, no error state, no user feedback on connection failures
+  // Fix Bug5: Add error handling to wallet connect function
   const handleCustomConnect = async () => {
-    setIsConnecting(true);
-    const connector = connectors[0]; // Always use first connector
+    if (isConnecting) return; // Prevent multiple simultaneous connection attempts
 
-    // Direct connect call without error handling
-    connect({ connector });
-    setIsConnecting(false);
+    setIsConnecting(true);
+    try {
+      const connector = connectors[0]; // Use first available connector
+      if (!connector) {
+        throw new Error("No wallet connector available");
+      }
+
+      await connect({ connector });
+      // Connection successful - state will be updated by wagmi hooks
+    } catch (error: any) {
+      console.error("Wallet connection failed:", error);
+      // Show user-friendly error message
+      alert(`Failed to connect wallet: ${error.message || "Unknown error"}`);
+    } finally {
+      setIsConnecting(false);
+    }
   };
 
   const handleDisconnect = () => {

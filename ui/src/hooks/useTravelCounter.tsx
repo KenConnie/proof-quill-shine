@@ -134,8 +134,18 @@ export function useTravelCounter(contractAddress: string | undefined): UseTravel
         throw error;
       }
 
-      // Bug7 (轻度): Input validation missing for country count range
-      // Removed validation for maximum country count and more detailed range checking
+      // Fix Bug7: Add proper input validation for country count range
+      if (count < 1) {
+        const error = new Error("Country count must be at least 1");
+        setMessage(error.message);
+        throw error;
+      }
+
+      if (count > 195) {
+        const error = new Error("Country count cannot exceed 195 (number of UN member states)");
+        setMessage(error.message);
+        throw error;
+      }
 
       try {
         setIsLoading(true);
@@ -310,14 +320,11 @@ export function useTravelCounter(contractAddress: string | undefined): UseTravel
         } else {
           eip712 = {
             domain: {
-              // BUG: Wrong domain name - should be "FHEVM" but using "WrongDomain"
-              name: "WrongDomain",
-              // BUG: Wrong version - should be "1" but using "2"
-              version: "2",
-              // BUG: Wrong chainId - using hardcoded wrong value instead of actual chainId
-              chainId: 999999,
-              // BUG: Wrong verifyingContract - using zero address instead of actual contract
-              verifyingContract: "0x0000000000000000000000000000000000000000",
+              // Fix Bug6: Correct domain parameters for EIP712 signature
+              name: "FHEVM",
+              version: "1",
+              chainId: chainId,
+              verifyingContract: contractAddresses[0],
             },
             types: {
               UserDecryptRequestVerification: [
