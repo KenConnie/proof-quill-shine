@@ -38,6 +38,9 @@ const config: HardhatUserConfig = {
         mnemonic: MNEMONIC,
       },
       chainId: 31337,
+      // Enable FHEVM on hardhat network
+      allowUnlimitedContractSize: true,
+      blockGasLimit: 30_000_000,
     },
     anvil: {
       accounts: {
@@ -47,6 +50,7 @@ const config: HardhatUserConfig = {
       },
       chainId: 31337,
       url: "http://localhost:8545",
+      timeout: 60000,
     },
     sepolia: {
       accounts: {
@@ -56,6 +60,18 @@ const config: HardhatUserConfig = {
       },
       chainId: 11155111,
       url: `https://sepolia.infura.io/v3/${INFURA_API_KEY}`,
+      gasPrice: 20000000000, // 20 gwei
+    },
+    // Add mainnet for production deployment
+    mainnet: {
+      accounts: {
+        mnemonic: MNEMONIC,
+        path: "m/44'/60'/0'/0/",
+        count: 5, // Fewer accounts for mainnet
+      },
+      chainId: 1,
+      url: `https://mainnet.infura.io/v3/${INFURA_API_KEY}`,
+      gasPrice: 30000000000, // 30 gwei
     },
   },
   paths: {
