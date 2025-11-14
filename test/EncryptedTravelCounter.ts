@@ -29,6 +29,12 @@ describe("EncryptedTravelCounter", function () {
   });
 
   beforeEach(async function () {
+    const deployment = await deployFixture();
+    contract = deployment.contract;
+    contractAddress = deployment.contractAddress;
+  });
+
+  beforeEach(async function () {
     // Check whether the tests are running against an FHEVM mock environment
     if (!fhevm.isMock) {
       console.warn(`This hardhat test suite cannot run on Sepolia Testnet`);
@@ -148,6 +154,132 @@ describe("EncryptedTravelCounter", function () {
       signers.bob,
     );
     expect(decryptedBobResult).to.eq(bobCount);
+  });
+
+  describe("Access Control", function () {
+    it("Should only allow users to modify their own counters", async function () {
+      const aliceCount = 5;
+      const bobCount = 3;
+
+      // Alice adds countries
+      const aliceInput = fhevm.createEncryptedInput(contractAddress, signers.alice.address);
+      aliceInput.add32(aliceCount);
+      const aliceEncrypted = aliceInput.encrypt();
+      await contract.connect(signers.alice).addCountries(aliceEncrypted.handles[0], aliceEncrypted.inputProof);
+
+      // Bob adds countries
+      const bobInput = fhevm.createEncryptedInput(contractAddress, signers.bob.address);
+      bobInput.add32(bobCount);
+      const bobEncrypted = bobInput.encrypt();
+      await contract.connect(signers.bob).addCountries(bobEncrypted.handles[0], bobEncrypted.inputProof);
+
+      // Verify Alice's count
+      const aliceEncryptedResult = await contract.getEncryptedCountryCount(signers.alice.address);
+      const aliceDecrypted = await fhevm.userDecryptEuint(
+        FhevmType.euint32,
+        aliceEncryptedResult,
+        contractAddress,
+        signers.alice,
+      );
+      expect(aliceDecrypted).to.eq(aliceCount);
+
+      // Verify Bob's count (should be separate)
+      const bobEncryptedResult = await contract.getEncryptedCountryCount(signers.bob.address);
+      const bobDecrypted = await fhevm.userDecryptEuint(
+        FhevmType.euint32,
+        bobEncryptedResult,
+        contractAddress,
+        signers.bob,
+      );
+      expect(bobDecrypted).to.eq(bobCount);
+    });
+
+    it("Should properly initialize new users", async function () {
+      // Check initial state
+      expect(await contract.hasInitialized(signers.alice.address)).to.be.false;
+
+      // Add countries
+      const input = fhevm.createEncryptedInput(contractAddress, signers.alice.address);
+      input.add32(10);
+      const encrypted = input.encrypt();
+      await contract.connect(signers.alice).addCountries(encrypted.handles[0], encrypted.inputProof);
+
+      // Check initialized state
+      expect(await contract.hasInitialized(signers.alice.address)).to.be.true;
+    });
+  });
+
+  describe("Event Emission", function () {
+    it("Should emit CountryCountAdded event with correct parameters", async function () {
+      const count = 7;
+      const input = fhevm.createEncryptedInput(contractAddress, signers.alice.address);
+      input.add32(count);
+      const encrypted = input.encrypt();
+
+      await expect(
+        contract.connect(signers.alice).addCountries(encrypted.handles[0], encrypted.inputProof)
+      )
+        .to.emit(contract, "CountryCountAdded")
+        .withArgs(signers.alice.address); // Note: timestamp is also emitted but we check the address
+    });
+
+    it("Should emit event with indexed user parameter", async function () {
+      const count = 3;
+      const input = fhevm.createEncryptedInput(contractAddress, signers.alice.address);
+      input.add32(count);
+      const encrypted = input.encrypt();
+
+      const tx = await contract.connect(signers.alice).addCountries(encrypted.handles[0], encrypted.inputProof);
+      const receipt = await tx.wait();
+
+      // Check that the event was emitted with indexed user
+      const event = receipt.logs.find(log => {
+        try {
+          return contract.interface.parseLog(log)?.name === "CountryCountAdded";
+        } catch {
+          return false;
+        }
+      });
+
+      expect(event).to.not.be.undefined;
+      const parsedEvent = contract.interface.parseLog(event!);
+      expect(parsedEvent.args.user).to.eq(signers.alice.address);
+    });
+  });
+
+  describe("Edge Cases", function () {
+    it("Should handle zero country count gracefully", async function () {
+      // Note: Frontend validation prevents this, but contract should handle it
+      const input = fhevm.createEncryptedInput(contractAddress, signers.alice.address);
+      input.add32(0); // Zero count
+      const encrypted = input.encrypt();
+
+      // This should work (though frontend prevents it)
+      await expect(
+        contract.connect(signers.alice).addCountries(encrypted.handles[0], encrypted.inputProof)
+      ).to.not.be.reverted;
+    });
+
+    it("Should handle large country counts", async function () {
+      const largeCount = 150; // Large but valid count
+      const input = fhevm.createEncryptedInput(contractAddress, signers.alice.address);
+      input.add32(largeCount);
+      const encrypted = input.encrypt();
+
+      await expect(
+        contract.connect(signers.alice).addCountries(encrypted.handles[0], encrypted.inputProof)
+      ).to.not.be.reverted;
+
+      // Verify the count was stored
+      const encryptedResult = await contract.getEncryptedCountryCount(signers.alice.address);
+      const decrypted = await fhevm.userDecryptEuint(
+        FhevmType.euint32,
+        encryptedResult,
+        contractAddress,
+        signers.alice,
+      );
+      expect(decrypted).to.eq(largeCount);
+    });
   });
 });
 
