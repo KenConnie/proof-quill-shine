@@ -403,6 +403,64 @@ npm run test:sepolia
 - **Sepolia Testnet (11155111)**: For public testing with Zama FHE relayer
 - **Mainnet**: Ready for production deployment (with proper configuration)
 
+## Troubleshooting
+
+### Common Issues
+
+#### 1. Hardhat Node Connection Failed
+**Error**: "Cannot connect to Hardhat node. Please ensure 'npx hardhat node' is running on http://localhost:8545"
+
+**Solution**:
+1. Open a new terminal
+2. Navigate to project root: `cd proof-quill-shine`
+3. Start Hardhat node: `npx hardhat node`
+4. Wait for "Started HTTP and WebSocket JSON-RPC server" message
+5. Refresh the browser
+
+#### 2. Contract Not Deployed
+**Error**: "Contract not deployed at [address]. Please deploy the contract first."
+
+**Solution**:
+```bash
+# Deploy to localhost
+npx hardhat deploy --network localhost
+
+# Copy the deployed address and update ui/.env.local
+# VITE_CONTRACT_ADDRESS=0x...
+```
+
+#### 3. Wallet Connection Failed
+**Error**: "Failed to connect wallet: [error message]"
+
+**Solutions**:
+- Ensure Rainbow Wallet extension is installed
+- Check if you're on the correct network (localhost:8545 for local development)
+- Try refreshing the page and reconnecting
+- Clear browser cache and local storage
+
+#### 4. Decryption Authorization Failed
+**Error**: "You don't have permission to decrypt this handle"
+
+**Causes & Solutions**:
+- **Old deployment**: Contract was redeployed, but you're trying to decrypt from a previous deployment
+  - Solution: Add countries again to get a new encrypted handle
+- **Transaction not confirmed**: Decryption attempted before transaction fully confirmed
+  - Solution: Wait 10-15 seconds after adding countries, then try decrypting
+- **Wrong network**: Attempting to decrypt on wrong network
+  - Solution: Ensure you're on the same network where countries were added
+
+#### 5. Input Validation Errors
+- Country count must be between 1 and 195 (UN member states)
+- Contract address must be a valid Ethereum address
+- All required environment variables must be set
+
+### Environment Variables
+
+Create `.env.local` in the `ui` folder:
+```
+VITE_CONTRACT_ADDRESS=0xYourDeployedContractAddress
+```
+
 ## Reset for Demo
 
 To clear all test data and prepare for a fresh demo:
