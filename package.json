@@ -1,7 +1,7 @@
 {
-  "name": "fhevm-hardhat-template",
-  "description": "Hardhat-based template for developing FHEVM Solidity smart contracts",
-  "version": "0.1.0",
+  "name": "proof-quill-shine",
+  "description": "TravelProof - Encrypted Travel Counter built with FHEVM for privacy-preserving country tracking",
+  "version": "1.0.0",
   "engines": {
     "node": ">=20",
     "npm": ">=7.0.0"
@@ -78,7 +78,15 @@
     "test": "hardhat test",
     "test:sepolia": "hardhat test --network sepolia",
     "build:ts": "tsc --project tsconfig.json",
-    "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain"
+    "typechain": "cross-env TS_NODE_TRANSPILE_ONLY=true hardhat typechain",
+    "deploy:localhost": "hardhat deploy --network localhost",
+    "deploy:sepolia": "hardhat deploy --network sepolia",
+    "deploy:mainnet": "hardhat deploy --network mainnet",
+    "node": "hardhat node",
+    "verify:sepolia": "hardhat verify --network sepolia",
+    "setup": "npm install && cd ui && npm install",
+    "dev": "cd ui && npm run dev",
+    "build": "npm run compile && cd ui && npm run build"
   },
   "overrides": {
     "ws@>=7.0.0 <7.5.10": ">=7.5.10",
