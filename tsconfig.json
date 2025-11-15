@@ -11,8 +11,14 @@
     "module": "commonjs",
     "moduleResolution": "node",
     "noImplicitAny": true,
+    "noImplicitReturns": true,
+    "noImplicitThis": true,
+    "noUnusedLocals": false, // Allow unused locals for development
+    "noUnusedParameters": false, // Allow unused parameters for development
     "removeComments": true,
     "resolveJsonModule": true,
+    "skipLibCheck": true, // Skip type checking of declaration files
+    "strict": true, // Enable all strict type checking options
     "sourceMap": true,
     "strict": true,
     "target": "es2022" // get error cause (ErrorOptions)
