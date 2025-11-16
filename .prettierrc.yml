@@ -3,13 +3,24 @@ plugins:
 printWidth: 120
 trailingComma: "all"
 endOfLine: "lf"
+semi: true
+singleQuote: false
+quoteProps: "as-needed"
+bracketSpacing: true
+arrowParens: "avoid"
+tabWidth: 2
 
 overrides:
   - files: "*.md"
     options:
       proseWrap: "always"
+      printWidth: 80
   - files: "*.sol"
     options:
       compiler: "0.8.24"
       parser: "slang"
       tabWidth: 4
+      printWidth: 100
+  - files: "*.json"
+    options:
+      printWidth: 200
